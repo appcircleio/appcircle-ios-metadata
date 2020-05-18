@@ -16,6 +16,7 @@ inputs:
   helpText:
 outputs:
 - key: "AC_METADATA_OUTPUT_PATH"
+  title: Metadata Output Path
   defaultValue: "AC_OUTPUT_DIR"
   description: Metadata output file path.
   helpText:
