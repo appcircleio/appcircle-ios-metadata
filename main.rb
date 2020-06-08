@@ -84,9 +84,9 @@ Find.find("#{repository_path}") do |p|
                     schemes.each do |arr_scheme|
                         entries = Xcodeproj::XCScheme.new(arr_scheme).build_action.entries
                         #Schemes multi launch target does not support
-                        if entries && entries[0]
-                            if entries[0].buildable_references && entries[0].buildable_references[0]
-                                if target.uuid == entries[0].buildable_references[0].target_uuid
+                        entries.each do |arr_entries|
+                            if arr_entries.buildable_references[0]
+                                if target.uuid == arr_entries.buildable_references[0].target_uuid
                                     bundle_identifier = get_bundle_identifier(target)
                                     scheme = File.basename(arr_scheme, '.xcscheme')
                                     extensions = get_embedded_and_watch_targets(project,target)
@@ -150,9 +150,8 @@ end
 
 #Combine
 project_workspace_paths = {};
-project_workspace_paths['projects'] = project_paths_schemes
+project_workspace_paths['projects'] = []
 # project_workspace_paths['workspaces'] = workspace_paths_schemes
-
 workspace_paths_schemes.each do |workspace|
     path = workspace["path"]
     type = workspace["type"]
@@ -171,6 +170,8 @@ workspace_paths_schemes.each do |workspace|
         "schemes" => schemes
     })
 end
+
+project_workspace_paths['projects'].concat(project_paths_schemes)
 
 xcode_versions = []
 if File.directory? xcode_list_path
