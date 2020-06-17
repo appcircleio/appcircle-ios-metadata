@@ -30,9 +30,12 @@ def get_bundle_identifiers(target)
     target.build_configurations.each { |configuration|
 
         b_id = configuration.build_settings["PRODUCT_BUNDLE_IDENTIFIER"]
-        unless bundle_identifiers.include? b_id
-            bundle_identifiers.push(b_id)
+        unless b_id.nil?
+            unless bundle_identifiers.include? b_id
+                bundle_identifiers.push(b_id)
+            end
         end
+        
 
     }
 
@@ -95,17 +98,19 @@ Find.find("#{repository_path}") do |p|
                     schemes.each do |arr_scheme|
                         entries = Xcodeproj::XCScheme.new(arr_scheme).build_action.entries
                         #Schemes multi launch target does not support
-                        entries.each do |arr_entries|
-                            if arr_entries.buildable_references[0]
-                                if target.uuid == arr_entries.buildable_references[0].target_uuid
-                                    bundle_identifiers = get_bundle_identifiers(target)
-                                    scheme = File.basename(arr_scheme, '.xcscheme')
-                                    extensions = get_embedded_and_watch_targets(project,target)
-                                    paths_schemes["schemes"].push({
-                                        "name" => scheme,
-                                        "bundleIdentifiers" => bundle_identifiers,
-                                        "extensions" => extensions
-                                    })
+                        unless entries.nil?
+                            entries.each do |arr_entries|
+                                if arr_entries.buildable_references[0]
+                                    if target.uuid == arr_entries.buildable_references[0].target_uuid
+                                        bundle_identifiers = get_bundle_identifiers(target)
+                                        scheme = File.basename(arr_scheme, '.xcscheme')
+                                        extensions = get_embedded_and_watch_targets(project,target)
+                                        paths_schemes["schemes"].push({
+                                            "name" => scheme,
+                                            "bundleIdentifiers" => bundle_identifiers,
+                                            "extensions" => extensions
+                                        })
+                                    end
                                 end
                             end
                         end
