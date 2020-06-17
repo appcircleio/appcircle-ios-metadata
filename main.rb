@@ -24,8 +24,19 @@ def get_launchable_targets(project)
     return launchable_targets
 end
 
-def get_bundle_identifier(target)
-    return target.build_configuration_list.build_settings(target.build_configuration_list.default_configuration_name)["PRODUCT_BUNDLE_IDENTIFIER"]
+def get_bundle_identifiers(target)
+    bundle_identifiers = []
+
+    target.build_configurations.each { |configuration|
+
+        b_id = configuration.build_settings["PRODUCT_BUNDLE_IDENTIFIER"]
+        unless bundle_identifiers.include? b_id
+            bundle_identifiers.push(b_id)
+        end
+
+    }
+
+    return bundle_identifiers
 end
 
 def get_embedded_and_watch_targets(project, launchable_target)
@@ -33,14 +44,14 @@ def get_embedded_and_watch_targets(project, launchable_target)
     embedded_targets = project.embedded_targets_in_native_target(launchable_target)
     embedded_targets.each do |embedded|
         if embedded.extension_target_type?
-            targets.push({"name" => embedded.to_s,"bundleIdentifier" => get_bundle_identifier(embedded)})
+            targets.push({"name" => embedded.to_s,"bundleIdentifiers" => get_bundle_identifiers(embedded)})
             #Watch App
         elsif embedded.product_type.match(/com.apple.product-type.application.watchapp/)
-            targets.push({"name" => embedded,"bundleIdentifier" => get_bundle_identifier(embedded)})
+            targets.push({"name" => embedded,"bundleIdentifiers" => get_bundle_identifiers(embedded)})
             embedded_watch_targets = project.embedded_targets_in_native_target(embedded)
             embedded_watch_targets.each do |embedded_watch|
                 if embedded_watch.extension_target_type?
-                    targets.push({"name" => embedded_watch.to_s,"bundleIdentifier" => get_bundle_identifier(embedded_watch)})
+                    targets.push({"name" => embedded_watch.to_s,"bundleIdentifiers" => get_bundle_identifiers(embedded_watch)})
                 end
             end
         end
@@ -72,12 +83,12 @@ Find.find("#{repository_path}") do |p|
             launchable_targets.each do |target|
                 schemes = Dir[File.join(p, 'xcshareddata', 'xcschemes', '*.xcscheme')]
                 if schemes.empty?
-                    bundle_identifier = get_bundle_identifier(target)
+                    bundle_identifiers = get_bundle_identifiers(target)
                     scheme = File.basename(p, '.xcodeproj')
                     extensions = get_embedded_and_watch_targets(project,target)
                     paths_schemes["schemes"].push({
                         "name" => scheme,
-                        "bundleIdentifier" => bundle_identifier,
+                        "bundleIdentifiers" => bundle_identifiers,
                         "extensions" => extensions
                     })
                 else
@@ -87,12 +98,12 @@ Find.find("#{repository_path}") do |p|
                         entries.each do |arr_entries|
                             if arr_entries.buildable_references[0]
                                 if target.uuid == arr_entries.buildable_references[0].target_uuid
-                                    bundle_identifier = get_bundle_identifier(target)
+                                    bundle_identifiers = get_bundle_identifiers(target)
                                     scheme = File.basename(arr_scheme, '.xcscheme')
                                     extensions = get_embedded_and_watch_targets(project,target)
                                     paths_schemes["schemes"].push({
                                         "name" => scheme,
-                                        "bundleIdentifier" => bundle_identifier,
+                                        "bundleIdentifiers" => bundle_identifiers,
                                         "extensions" => extensions
                                     })
                                 end
